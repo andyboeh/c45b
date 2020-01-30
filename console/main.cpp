@@ -20,11 +20,12 @@
 
 #include <errno.h>
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QDebug>
 #include <QTextStream>
 #include <QThread>
 #include <QTime>
+#include <QElapsedTimer>
 
 #include <ezOptionParser.hpp>
 
@@ -38,8 +39,7 @@
 using namespace std;
 
 
-static void SilentMsgHandler(QtMsgType, const char *);
-
+static void SilentMsgHandler(QtMsgType, const QMessageLogContext &, const QString &);
 
 static const char* version = "0.3";
 
@@ -110,7 +110,7 @@ bool readEeprom(HexFile& o_hexFile, quint32 eepromReadBytes, C45BSerialPort* por
     for (quint32 i = 0; i < eepromReadBytes; ++i)
     {
         QString cmd = QString("er%1").arg(i, 4, 16, QChar('0'));
-        port->write(cmd.toAscii());
+        port->write(cmd.toLatin1());
         port->putChar('\n');
         QString reply = port->readUntil('\r', 10);
         reply = reply.replace(QChar(C45BSerialPort::XOFF), "").trimmed();
@@ -137,7 +137,7 @@ bool readEeprom(HexFile& o_hexFile, quint32 eepromReadBytes, C45BSerialPort* por
 bool program(const HexFile& hexFile, C45BSerialPort* port, int delay, bool doFlash, bool verbose)
 {
     QString cmd(doFlash ? "pf" : "pe");
-    port->write(cmd.toAscii().data(), cmd.size());
+    port->write(cmd.toLatin1().data(), cmd.size());
     port->putChar('\n');
     // Wait for "pf+\r"
     QString reply = port->readUntil('\r', 10);
@@ -190,9 +190,9 @@ bool connectBootloader(C45BSerialPort* port, bool debug, bool verbose)
     // How many ms to wait for bootloader prompt
     const int InitialTimeOut = 60000;
 
-    QTime t;
+    QElapsedTimer t;
     t.start();
-    QTime t2;
+    QElapsedTimer t2;
     t2.start();
     int avail = 0;
 
@@ -211,7 +211,7 @@ bool connectBootloader(C45BSerialPort* port, bool debug, bool verbose)
         port->putChar('U');
         port->putChar('U');
         port->putChar('\n');
-        port->flushOutBuffer();
+        port->flush();
 
         Msleep(100);
         if (verbose && (t2.elapsed() > 1000))
@@ -274,7 +274,7 @@ bool connectBootloader(C45BSerialPort* port, bool debug, bool verbose)
 int main(int argc, char** argv)
 {
     // Suppress qDebug output from QSerialPort
-    qInstallMsgHandler(SilentMsgHandler);
+    qInstallMessageHandler(SilentMsgHandler);
     
     QCoreApplication app(argc, argv);
 
@@ -520,6 +520,6 @@ int main(int argc, char** argv)
     port->close();
 }
 
-static void SilentMsgHandler(QtMsgType, const char *)
+static void SilentMsgHandler(QtMsgType, const QMessageLogContext &, const QString &)
 {
 }

@@ -17,12 +17,13 @@
 
 include(../prefix.pri)
 
-INCLUDEPATH += ../qserialport/include ../common ../ezOptionParser-0.0.0
-LIBS += -L../qserialport/lib -lQtSerialPort
+QT += widgets serialport
+
+INCLUDEPATH += ../common ../ezOptionParser-0.0.0
 
 TARGET = c45b
 
-DEPENDPATH += ../qserialport/lib ../ezOptionParser-0.0.0
+DEPENDPATH += ../ezOptionParser-0.0.0
 
 CONFIG += console no_lflags_merge
 

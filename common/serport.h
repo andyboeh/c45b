@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with c45b.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <QtSerialPort/qserialport.h>
+#include <QSerialPort>
 
-class C45BSerialPort : public TNX::QSerialPort
+class C45BSerialPort : public QSerialPort
 {
 public:
     static const char XON  = 0x11;

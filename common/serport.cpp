@@ -37,25 +37,24 @@ C45BSerialPort::~C45BSerialPort()
 
 bool C45BSerialPort::init(int baudRate)
 {
+    bool ok;
     // To set the baud rate from an integer, use QPortSettings::set(QString).
     // We must do this first, since it resets all settings first.
-    TNX::QPortSettings settings;
     if (baudRate <= 0)
         baudRate = 19200;
-    if (!settings.set(QString("%1").arg(baudRate)))
+    if (!setBaudRate(baudRate))
     {
         cout << "Cannot set baud rate to " << baudRate << endl;
         return false;
     }
-    // Set the other settings...
-    settings.setFlowControl(TNX::QPortSettings::FLOW_XONXOFF);
-    settings.setParity(TNX::QPortSettings::PAR_NONE);
-    settings.setDataBits(TNX::QPortSettings::DB_8);
-    settings.setStopBits(TNX::QPortSettings::STOP_2);
-    // ...then apply them to the port, and open it.
-    return setPortSettings(settings) &&
-        setCommTimeouts(CtScheme_TimedRead, 100) &&
-        open(QIODevice::ReadWrite);       
+
+    ok = setFlowControl(FlowControl::SoftwareControl);
+    ok = ok && setParity(Parity::NoParity);
+    ok = ok && setDataBits(DataBits::Data8);
+    ok = ok && setStopBits(StopBits::TwoStop);
+    ok = ok && open(QIODevice::ReadWrite);
+
+    return ok;
 }
 
 QByteArray C45BSerialPort::readUntil(char terminator, qint64 maxSize)
@@ -80,7 +79,7 @@ bool C45BSerialPort::downloadLine(QString s)
 	// Send the hex record
     // if (m_verbose)
     //     cout << "Sending '" << s.trimmed().toAscii().data() << "'" << endl;
-    write(s.toAscii());
+    write(s.toLatin1());
 	
 	// read until XON, 10 characters or timeout
     Msleep(8);
@@ -106,6 +105,6 @@ bool C45BSerialPort::downloadLine(QString s)
     }
     // ...and with '*' on page write
     if (m_verbose && r.contains('*'))
-        cout << "+" << flush;
+        cout << "+" << std::flush;
     return true;
 }
